@@ -11,7 +11,9 @@
     "e2e": "npx playwright test"
   },
   "dependencies": {
+    "@apollo/client": "^3.7.3",
     "@tauri-apps/api": "^1.2.0",
+    "@vue/apollo-composable": "^4.0.0-beta.1",
     "apollo-boost": "^0.4.9",
     "autoprefixer": "^10",
     "graphql": "^16.6.0",

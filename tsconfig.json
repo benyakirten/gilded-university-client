@@ -13,6 +13,12 @@
     "lib": ["ESNext", "DOM"],
     "skipLibCheck": true,
     "types": ["vitest/globals"],
+    "paths": {
+      "@": ["./src"],
+      "@/*": ["./src/*"],
+      "@types": ["./src/types"],
+      "@types/*": ["./src/types/*"],
+    }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
   "references": [{ "path": "./tsconfig.node.json" }],
