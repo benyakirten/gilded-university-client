@@ -1,7 +1,7 @@
-import { createApp } from "vue";
+import { createApp, provide, h } from "vue";
+import { DefaultApolloClient } from "@vue/apollo-composable"
 import { createPinia } from "pinia";
 import ApolloClient from 'apollo-boost'
-import VueApollo from 'vue-apollo'
 
 import "./style.css";
 import App from "./App.vue";
@@ -9,18 +9,16 @@ import App from "./App.vue";
 
 const apolloClient = new ApolloClient({
   // You should use an absolute URL here
-  uri: import.meta.env.VITE_GRAPHQL_URI
+  uri: import.meta.env.VITE_GRAPHQL_URL
 })
-
-export const apolloProvider = new VueApollo({
-  defaultClient: apolloClient,
-})
-
-
 
 const pinia = createPinia()
-const app = createApp(App)
+const app = createApp({
+  setup() {
+    provide(DefaultApolloClient, apolloClient)
+  },
+  render: () => h(App),
+})
 
 app.use(pinia)
-app.use(apolloProvider)
 app.mount("#app");
