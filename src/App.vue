@@ -2,40 +2,38 @@
 import { useQuery } from "@vue/apollo-composable"
 import gql from "graphql-tag";
 
-import Greet from "./components/Greet.vue";
 import { UsersResponse } from "@types";
 import { watch } from "vue";
 
 const { result } = useQuery<UsersResponse>(gql`
-  query users {
-    id
-    email
-    name
+  query {
+    users {
+      id
+      email
+      name
+      role
+      status
+    }
   }
 `)
 
 watch(result, value => {
-  alert(value)
+  value?.users.forEach(u => Object.keys(u).forEach(console.log))
 })
 </script>
 
 <template>
   <div class="container">
-    <h1 v-if="!result">NO RESULT</h1>
-    <ul v-if="result">
-      <li :v-for="user in result.users">
-        {user}
-      </li>
-    </ul>
+    <div class="text-xl" v-if="result">
+      <ul>
+        <li v-for="user of result?.users">
+          {{ user.email }} - {{ user.id }} - {{ user.name }} - {{ user.role }} - {{ user.status }}
+        </li>
+      </ul>
+    </div>
+    <div v-else>
+      I'm sorry but no result!
+    </div>
   </div>
 </template>
 
-<style scoped>
-.logo.vite:hover {
-  filter: drop-shadow(0 0 2em #747bff);
-}
-
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #249b73);
-}
-</style>
