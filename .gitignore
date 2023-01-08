@@ -26,7 +26,6 @@ dist-ssr
 /test-results/
 /playwright-report/
 /playwright/.cache/
-apollo.config.js
 
 # Environemnt
 *.env
