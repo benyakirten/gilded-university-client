@@ -149,14 +149,16 @@ mod test_decrypt_token {
 
 pub fn get_key_and_nonce() -> Result<([u8; 32], [u8; 24]), StorageError> {
     let key: String = env::var("FILE_ENCRYPTION_KEY").map_err(|_| {
-        StorageError::EncryptionError("No encryption key environment variable".into())
+        StorageError::EncryptionError("FILE_ENCRYPTION_KEY environment variable is not set".into())
     })?;
     let key_array: [u8; 32] = key
         .as_bytes()
         .try_into()
         .map_err(|_| StorageError::KeyConversionError)?;
     let nonce = env::var("FILE_ENCRYPTION_NONCE").map_err(|_| {
-        StorageError::EncryptionError("No encryption nonce environment variable".into())
+        StorageError::EncryptionError(
+            "FILE_ENCRYPTION_NONCE environment variable is not set".into(),
+        )
     })?;
     let nonce_array: [u8; 24] = nonce
         .as_bytes()
@@ -169,28 +171,89 @@ pub fn get_key_and_nonce() -> Result<([u8; 32], [u8; 24]), StorageError> {
 mod test_get_key_and_nonce {
     use std::env;
 
+    use crate::get_key_and_nonce;
+
     #[test]
     fn no_key() {
         env::remove_var("FILE_ENCRYPTION_KEY");
+        let got = get_key_and_nonce();
+
+        assert!(got.is_err());
+
+        let err = got.err().unwrap();
+        assert_eq!(
+            err.to_string(),
+            "Unable to encrypt data: FILE_ENCRYPTION_KEY environment variable is not set"
+        );
     }
 
     #[test]
     fn key_invalid_u8() {
-        env::set_var("FILE_ENCRYPTION_KEY", "value")
+        env::set_var("FILE_ENCRYPTION_KEY", "��������������������������������");
+        let got = get_key_and_nonce();
+
+        assert!(got.is_err());
+
+        let err = got.err().unwrap();
+        assert_eq!(
+            err.to_string(),
+            "Key must be a string of 32 characters with utf-8 formatting"
+        );
     }
 
     #[test]
     fn no_nonce() {
-        env::remove_var("FILE_ENCRYPTION_NONCE")
+        env::set_var("FILE_ENCRYPTION_KEY", "12345678901234567890123456789012");
+        env::remove_var("FILE_ENCRYPTION_NONCE");
+
+        let got = get_key_and_nonce();
+
+        assert!(got.is_err());
+
+        let err = got.err().unwrap();
+        assert_eq!(
+            err.to_string(),
+            "Unable to encrypt data: FILE_ENCRYPTION_NONCE environment variable is not set"
+        );
     }
 
     #[test]
     fn nonce_invalid_u8() {
-        env::set_var("FILE_ENCRYPTION_NONCE", "")
+        env::set_var("FILE_ENCRYPTION_KEY", "12345678901234567890123456789012");
+        env::set_var("FILE_ENCRYPTION_NONCE", "������������������������");
+        let got = get_key_and_nonce();
+
+        assert!(got.is_err());
+
+        let err = got.err().unwrap();
+        assert_eq!(
+            err.to_string(),
+            "Nonce must be a string of 24 characters with utf-8 formatting"
+        );
     }
 
     #[test]
     fn valid_key_and_nonce() {
-        //
+        env::set_var("FILE_ENCRYPTION_KEY", "12345678901234567890123456789012");
+        env::set_var("FILE_ENCRYPTION_NONCE", "123456789012345678901234");
+
+        let got = get_key_and_nonce();
+        assert!(got.is_ok());
+
+        let (key, nonce) = got.unwrap();
+        assert_eq!(
+            key,
+            [
+                49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49,
+                50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50
+            ],
+        );
+        assert_eq!(
+            nonce,
+            [
+                49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49,
+                50, 51, 52
+            ]
+        );
     }
 }
