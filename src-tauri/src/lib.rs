@@ -1,7 +1,7 @@
 use std::{env, fs};
 
 use chacha20poly1305::{
-    aead::{Aead, NewAead},
+    aead::{Aead, KeyInit},
     XChaCha20Poly1305,
 };
 use serde::Serialize;
@@ -48,7 +48,7 @@ mod test_write_token {
 }
 
 // When refresh tokens are implemented - add those to be read too
-pub fn encrypt_token(token: &str) -> Result<String, StorageError> {
+pub fn encrypt_token(token: &str) -> Result<Vec<u8>, StorageError> {
     let (key, nonce): ([u8; 32], [u8; 24]) = get_key_and_nonce()?;
 
     let cipher = XChaCha20Poly1305::new(&key.into());
@@ -56,19 +56,34 @@ pub fn encrypt_token(token: &str) -> Result<String, StorageError> {
         .encrypt(&nonce.into(), token.as_bytes().as_ref())
         .map_err(|e| StorageError::EncryptionError(e.to_string()))?;
 
-    let encrypted_token = String::from_utf8(encrypted_vec)
-        .map_err(|e| StorageError::EncryptionError(e.to_string()))?;
-
-    Ok(encrypted_token)
+    Ok(encrypted_vec)
 }
 
 #[cfg(test)]
 mod test_encrypt_token {
+    use std::env;
+
+    use crate::encrypt_token;
+
     #[test]
     fn fail_if_key_and_nonce_invalid() {}
 
     #[test]
-    fn success() {}
+    fn success() {
+        env::set_var("FILE_ENCRYPTION_KEY", "12345678901234567890123456789012");
+        env::set_var("FILE_ENCRYPTION_NONCE", "123456789012345678901234");
+        let got = encrypt_token("hello");
+        assert!(got.is_ok());
+
+        let got = got.unwrap();
+        assert_eq!(
+            got,
+            vec![
+                145, 197, 231, 192, 14, 9, 75, 168, 206, 124, 218, 212, 108, 206, 158, 140, 165,
+                93, 198, 108, 208
+            ]
+        );
+    }
 
     // Is there a limit to how large the tokens can be?
     #[test]
