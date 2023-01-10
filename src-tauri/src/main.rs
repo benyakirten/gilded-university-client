@@ -4,18 +4,18 @@
 )]
 
 use dotenvy::dotenv;
-use guilded_university_app::{read_token, write_token, StorageError};
+use guilded_university_app::{read_token, write_token, StorageError, TOKEN_PATH};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
 fn store_token(token: &str) -> Result<(), StorageError> {
-    write_token(token)?;
+    write_token(token, TOKEN_PATH)?;
     Ok(())
 }
 
 #[tauri::command]
 fn get_token() -> Result<String, StorageError> {
-    let token = read_token()?;
+    let token = read_token(TOKEN_PATH)?;
     Ok(token)
 }
 

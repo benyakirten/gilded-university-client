@@ -14,7 +14,7 @@ pub enum StorageError {
     #[error("Unable to encrypt data: {0}")]
     EncryptionError(String),
     #[error("Unable to decrypt data: {0}")]
-    DecryptionEror(String),
+    DecryptionError(String),
     #[error("Key must be a string of 32 characters with utf-8 formatting")]
     KeyConversionError,
     #[error("Nonce must be a string of 24 characters with utf-8 formatting")]
@@ -30,9 +30,9 @@ impl Serialize for StorageError {
     }
 }
 
-pub fn write_token(token: &str) -> Result<(), StorageError> {
+pub fn write_token(token: &str, path: &str) -> Result<(), StorageError> {
     let encrypted_token = encrypt_token(token)?;
-    fs::write(TOKEN_PATH, encrypted_token)
+    fs::write(path, encrypted_token)
         .map_err(|_| StorageError::EncryptionError("Unable to write token to file".into()))?;
 
     Ok(())
@@ -40,11 +40,29 @@ pub fn write_token(token: &str) -> Result<(), StorageError> {
 
 #[cfg(test)]
 mod test_write_token {
-    #[test]
-    fn success() {}
+    use std::{env, fs};
 
+    use crate::write_token;
     #[test]
-    fn fail() {}
+    fn success() {
+        env::set_var("FILE_ENCRYPTION_KEY", "12345678901234567890123456789012");
+        env::set_var("FILE_ENCRYPTION_NONCE", "123456789012345678901234");
+
+        let res = write_token("hello", ".testtoken");
+        assert!(res.is_ok());
+
+        let got = fs::read(".testtoken");
+        assert!(got.is_ok());
+
+        let got = got.unwrap();
+        assert_eq!(
+            got,
+            vec![
+                145, 197, 231, 192, 14, 9, 75, 168, 206, 124, 218, 212, 108, 206, 158, 140, 165,
+                93, 198, 108, 208
+            ]
+        );
+    }
 }
 
 // When refresh tokens are implemented - add those to be read too
@@ -66,7 +84,17 @@ mod test_encrypt_token {
     use crate::encrypt_token;
 
     #[test]
-    fn fail_if_key_and_nonce_invalid() {}
+    fn fail_if_key_and_nonce_invalid() {
+        env::remove_var("FILE_ENCRYPTION_KEY");
+        let got = encrypt_token("hello");
+        assert!(got.is_err());
+
+        let err = got.err().unwrap();
+        assert_eq!(
+            err.to_string(),
+            "Unable to encrypt data: FILE_ENCRYPTION_KEY environment variable is not set"
+        );
+    }
 
     #[test]
     fn success() {
@@ -85,18 +113,24 @@ mod test_encrypt_token {
         );
     }
 
-    // Is there a limit to how large the tokens can be?
     #[test]
-    fn fail_on_large_token() {}
+    fn succeed_on_empty_token() {
+        env::set_var("FILE_ENCRYPTION_KEY", "12345678901234567890123456789012");
+        env::set_var("FILE_ENCRYPTION_NONCE", "123456789012345678901234");
+        let got = encrypt_token("");
+        assert!(got.is_ok());
 
-    // What is the limit?
-    #[test]
-    fn succeed_on_empty_token() {}
+        let got = got.unwrap();
+        assert_eq!(
+            got,
+            vec![124, 126, 210, 66, 163, 145, 204, 27, 165, 192, 253, 65, 185, 90, 206, 65]
+        );
+    }
 }
 
-pub fn read_token() -> Result<String, StorageError> {
-    let encrypted_data = fs::read(TOKEN_PATH)
-        .map_err(|_| StorageError::DecryptionEror("Unable to read data from file".into()))?;
+pub fn read_token(path: &str) -> Result<String, StorageError> {
+    let encrypted_data = fs::read(path)
+        .map_err(|_| StorageError::DecryptionError("Unable to read data from file".into()))?;
 
     let decrypted_token = decrypt_token(encrypted_data)?;
 
@@ -105,14 +139,82 @@ pub fn read_token() -> Result<String, StorageError> {
 
 #[cfg(test)]
 mod test_read_token {
-    #[test]
-    fn success() {}
+    use std::{env, fs};
+
+    use crate::read_token;
 
     #[test]
-    fn fail() {}
+    fn success() {
+        env::set_var("FILE_ENCRYPTION_KEY", "12345678901234567890123456789012");
+        env::set_var("FILE_ENCRYPTION_NONCE", "123456789012345678901234");
+
+        fs::write(
+            ".testfile",
+            vec![
+                145, 197, 231, 192, 14, 9, 75, 168, 206, 124, 218, 212, 108, 206, 158, 140, 165,
+                93, 198, 108, 208,
+            ],
+        )
+        .unwrap();
+
+        let got = read_token(".testfile");
+
+        assert!(got.is_ok());
+
+        let got = got.unwrap();
+        assert_eq!(got, "hello");
+    }
 
     #[test]
-    fn fail_if_file_absent() {}
+    fn fail_on_no_env_variables() {
+        env::remove_var("FILE_ENCRYPTION_KEY");
+        fs::write(
+            ".testfile",
+            vec![
+                145, 197, 231, 192, 14, 9, 75, 168, 206, 124, 218, 212, 108, 206, 158, 140, 165,
+                93, 198, 108, 208,
+            ],
+        )
+        .unwrap();
+
+        let got = read_token(".testfile");
+        assert!(got.is_err());
+
+        let err = got.err().unwrap();
+        assert_eq!(
+            err.to_string(),
+            "Unable to encrypt data: FILE_ENCRYPTION_KEY environment variable is not set"
+        )
+    }
+
+    #[test]
+    fn fail_on_invalid_contents() {
+        env::set_var("FILE_ENCRYPTION_KEY", "12345678901234567890123456789012");
+        env::set_var("FILE_ENCRYPTION_NONCE", "123456789012345678901234");
+
+        fs::write(".testfile", vec![]).unwrap();
+
+        let got = read_token(".testfile");
+        assert!(got.is_err());
+
+        let err = got.err().unwrap();
+        assert_eq!(err.to_string(), "Unable to decrypt data: aead::Error")
+    }
+
+    #[test]
+    fn fail_if_file_absent() {
+        env::set_var("FILE_ENCRYPTION_KEY", "12345678901234567890123456789012");
+        env::set_var("FILE_ENCRYPTION_NONCE", "123456789012345678901234");
+
+        let got = read_token(".nonexistentfile");
+        assert!(got.is_err());
+
+        let err = got.err().unwrap();
+        assert_eq!(
+            err.to_string(),
+            "Unable to decrypt data: Unable to read data from file"
+        )
+    }
 }
 
 pub fn decrypt_token(encrypted_token: Vec<u8>) -> Result<String, StorageError> {
@@ -121,10 +223,10 @@ pub fn decrypt_token(encrypted_token: Vec<u8>) -> Result<String, StorageError> {
     let cipher = XChaCha20Poly1305::new(&key.into());
     let decrypted_token = cipher
         .decrypt(&nonce.into(), encrypted_token.as_ref())
-        .map_err(|e| StorageError::DecryptionEror(e.to_string()))?;
+        .map_err(|e| StorageError::DecryptionError(e.to_string()))?;
 
     let token = String::from_utf8(decrypted_token).map_err(|_| {
-        StorageError::DecryptionEror("Unable to read token from derypted data".into())
+        StorageError::DecryptionError("Unable to read token from derypted data".into())
     })?;
 
     Ok(token)
@@ -132,19 +234,53 @@ pub fn decrypt_token(encrypted_token: Vec<u8>) -> Result<String, StorageError> {
 
 #[cfg(test)]
 mod test_decrypt_token {
-    #[test]
-    fn fail_if_key_and_nonce_invalid() {}
+    use std::env;
+
+    use crate::decrypt_token;
 
     #[test]
-    fn success() {}
+    fn fail_if_key_and_nonce_invalid() {
+        env::remove_var("FILE_ENCRYPTION_KEY");
+        let got = decrypt_token(vec![
+            145, 197, 231, 192, 14, 9, 75, 168, 206, 124, 218, 212, 108, 206, 158, 140, 165, 93,
+            198, 108, 208,
+        ]);
+        assert!(got.is_err());
 
-    // Is there a limit to how large the tokens can be?
-    #[test]
-    fn fail_on_large_token() {}
+        let err = got.err().unwrap();
+        assert_eq!(
+            err.to_string(),
+            "Unable to encrypt data: FILE_ENCRYPTION_KEY environment variable is not set"
+        );
+    }
 
-    // What is the limit?
     #[test]
-    fn succeed_on_empty_token() {}
+    fn success() {
+        env::set_var("FILE_ENCRYPTION_KEY", "12345678901234567890123456789012");
+        env::set_var("FILE_ENCRYPTION_NONCE", "123456789012345678901234");
+
+        let got = decrypt_token(vec![
+            145, 197, 231, 192, 14, 9, 75, 168, 206, 124, 218, 212, 108, 206, 158, 140, 165, 93,
+            198, 108, 208,
+        ]);
+
+        assert!(got.is_ok());
+
+        let got = got.unwrap();
+        assert_eq!(got, "hello");
+    }
+
+    #[test]
+    fn fail_on_empty_token() {
+        env::set_var("FILE_ENCRYPTION_KEY", "12345678901234567890123456789012");
+        env::set_var("FILE_ENCRYPTION_NONCE", "123456789012345678901234");
+
+        let got = decrypt_token(vec![]);
+        assert!(got.is_err());
+
+        let err = got.err().unwrap();
+        assert_eq!(err.to_string(), "Unable to decrypt data: aead::Error");
+    }
 }
 
 pub fn get_key_and_nonce() -> Result<([u8; 32], [u8; 24]), StorageError> {
@@ -255,5 +391,39 @@ mod test_get_key_and_nonce {
                 50, 51, 52
             ]
         );
+    }
+}
+
+#[cfg(test)]
+mod test_round_trip {
+    use crate::{read_token, write_token};
+    use std::{env, fs};
+
+    #[test]
+
+    fn test_round_trip() {
+        env::set_var("FILE_ENCRYPTION_KEY", "12345678901234567890123456789012");
+        env::set_var("FILE_ENCRYPTION_NONCE", "123456789012345678901234");
+
+        let res = write_token("hello", ".testtoken");
+        assert!(res.is_ok());
+
+        let got = fs::read(".testtoken");
+        assert!(got.is_ok());
+
+        let got = got.unwrap();
+        assert_eq!(
+            got,
+            vec![
+                145, 197, 231, 192, 14, 9, 75, 168, 206, 124, 218, 212, 108, 206, 158, 140, 165,
+                93, 198, 108, 208
+            ]
+        );
+
+        let got = read_token(".testtoken");
+        assert!(got.is_ok());
+
+        let got = got.unwrap();
+        assert_eq!(got, "hello");
     }
 }
