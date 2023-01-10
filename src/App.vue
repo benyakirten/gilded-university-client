@@ -4,36 +4,32 @@ import gql from "graphql-tag";
 
 import { UsersResponse } from "@types";
 import { watch } from "vue";
+import { useUserStore } from "./store/user";
 
-const { result } = useQuery<UsersResponse>(gql`
-  query {
-    users {
-      id
-      email
-      name
-      role
-      status
-    }
-  }
-`)
+const userState = useUserStore()
 
-watch(result, value => {
-  value?.users.forEach(u => Object.keys(u).forEach(console.log))
-})
+// const { result } = useQuery<UsersResponse>(gql`
+//   query {
+//     users {
+//       id
+//       email
+//       name
+//       role
+//       status
+//     }
+//   }
+// `)
+
+// Check if user is stored by tauri - store encrypted in file
+// If user is defined, send request to backend to check if token has expired
+// If token has expired, attempt to use refresh token
+// If refresh doesn't work, require user to log in
+// If login succeeds
 </script>
 
 <template>
-  <div class="container">
-    <div class="text-xl" v-if="result">
-      <ul>
-        <li v-for="user of result?.users">
-          {{ user.email }} - {{ user.id }} - {{ user.name }} - {{ user.role }} - {{ user.status }}
-        </li>
-      </ul>
-    </div>
-    <div v-else>
-      I'm sorry but no result!
-    </div>
+  <div>
+    Are you logged in?
   </div>
 </template>
 
