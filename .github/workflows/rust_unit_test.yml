@@ -16,6 +16,7 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+      - run: cd src-tauri && ls -al
       - uses: actions-rs/cargo@v1
         with:
           command: check
@@ -31,6 +32,7 @@ jobs:
           toolchain: stable
           override: true
       - run: rustup component add rustfmt
+      - run: cd src-tauri && ls -al
       - uses: actions-rs/cargo@v1
         with:
           command: fmt
@@ -47,6 +49,7 @@ jobs:
           toolchain: stable
           override: true
       - run: rustup component add clippy
+      - run: cd src-tauri && ls -al
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
@@ -62,6 +65,7 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+      - run: cd src-tauri && ls -al
       - uses: actions-rs/cargo@v1
         with:
           command: test
