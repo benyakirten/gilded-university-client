@@ -18,6 +18,10 @@
       "@/*": ["./src/*"],
       "@types": ["./src/types"],
       "@types/*": ["./src/types/*"],
+      "@page": ["./src/page"],
+      "@page/*": ["./src/page/*"],
+      "@comps": ["./src/components"],
+      "@comps/*": ["./src/components/*"],
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
