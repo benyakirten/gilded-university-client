@@ -9,12 +9,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - run: cd src-tauri
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
-      - run: cd src-tauri
       - uses: actions-rs/cargo@v1
         with:
           command: check
@@ -24,13 +24,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - run: cd src-tauri
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
       - run: rustup component add rustfmt
-      - run: cd src-tauri
       - uses: actions-rs/cargo@v1
         with:
           command: fmt
@@ -41,13 +41,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - run: cd src-tauri
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
       - run: rustup component add clippy
-      - run: cd src-tauri
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
@@ -58,13 +58,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - run: cd src-tauri
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
-      - run: cd src-tauri
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: -p entity --workspace -- --skip integration_
