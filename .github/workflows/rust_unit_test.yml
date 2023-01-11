@@ -1,7 +1,9 @@
 on: [push, pull_request]
 
 name: Unit Test
-
+defaults:
+  run:
+    working-directory: src-tauri
 
 jobs:
   check:
@@ -9,7 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: cd src-tauri
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -24,7 +25,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: cd src-tauri
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -41,7 +41,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: cd src-tauri && ls -al
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -58,7 +57,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: cd src-tauri
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
