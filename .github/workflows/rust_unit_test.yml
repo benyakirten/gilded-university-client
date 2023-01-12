@@ -36,7 +36,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: fmt
-          args: --all -- --check
+          args: --manifest-path src-tauri/Cargo.toml --all -- --check
 
   clippy:
     name: Clippy
@@ -53,7 +53,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: -- -D warnings
+          args: --manifest-path src-tauri/Cargo.toml -- -D warnings
 
   test:
     name: Test Suite
@@ -69,4 +69,4 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: -- --test-threads 1
+          args: --manifest-path src-tauri/Cargo.toml -- --test-threads 1
