@@ -5,7 +5,7 @@ import gql from "graphql-tag";
 import { UsersResponse } from "@types";
 import { watch } from "vue";
 import { useUserStore } from "./store/user";
-import { BaseButton, CenterItems } from "./components";
+import { BaseButton, CenterItems, TextInput } from "./components";
 
 const userState = useUserStore()
 
@@ -31,9 +31,16 @@ const userState = useUserStore()
 <template>
   <main class="min-h-screen flex">
     <CenterItems>
-      <BaseButton>
-        Click me
-      </BaseButton>
+      <div class="flex flex-col">
+        <TextInput name="text" value="">
+          <template #label>
+            TEST!
+          </template>
+        </TextInput>
+        <BaseButton>
+          Click me
+        </BaseButton>
+      </div>
     </CenterItems>
   </main>
 </template>
