@@ -5,7 +5,7 @@ import gql from "graphql-tag";
 import { UsersResponse } from "@types";
 import { watch } from "vue";
 import { useUserStore } from "./store/user";
-import { BaseButton } from "./components";
+import { BaseButton, CenterItems } from "./components";
 
 const userState = useUserStore()
 
@@ -29,10 +29,11 @@ const userState = useUserStore()
 </script>
 
 <template>
-  <div class="grid w-full min-h-screen h-full place-items-center">
-    <BaseButton>
-      Click me
-    </BaseButton>
-  </div>
+  <main class="min-h-screen flex">
+    <CenterItems>
+      <BaseButton>
+        Click me
+      </BaseButton>
+    </CenterItems>
+  </main>
 </template>
-

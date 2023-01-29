@@ -1,18 +1,35 @@
 <script lang="ts" setup>
-  import { useForeignStyles } from "@/utils"
+  import { computed, ref } from "vue"
 
-  const props = defineProps<{ class?: string, style?: Record<string, string>}>()
-  const baseClasses = "transition-all duration-500 px-2 py-1 rounded-xl capitalize hover:shadow-lg hover:bg-slate-100 active:shadow-sm active:translate-y-[2px]"
-  const { classes, style } = useForeignStyles(baseClasses, props.class, props.style)
+  import { convertObjectToStyleString, findCorner, CornerEnum } from "@/utils"
+
+  const { class: classes, style } = defineProps<{ class?: string, style?: Record<string, string>}>()
+  const foreignStyles = computed(() => convertObjectToStyleString(style ?? {}))
   const emit = defineEmits<{ (e: "click", event: MouseEvent ): void}>()
-
   function handleClick(e: MouseEvent) {
+    setCorner(e)
     emit("click", e)
   }
+
+  const corner = ref(CornerEnum.TOP_LEFT)
+  function setCorner(e: MouseEvent) {
+    corner.value = findCorner(e) ?? CornerEnum.TOP_LEFT
+  }
+
+  const totalClasses = computed(() => {
+    const rotation = (corner.value === CornerEnum.TOP_LEFT || corner.value === CornerEnum.BOTTOM_LEFT) ? 'active:-rotate-1' : 'active:rotate-1'
+    return `${rotation} ${classes}`
+  })
 </script>
 
 <template>
-  <button class="" :class="classes" :style="style" @click="handleClick">
+  <button
+    class="transition-all duration-300 px-2 py-1 rounded-xl capitalize hover:shadow-lg hover:bg-slate-100 active:shadow-sm active:translate active:translate-y-[2px]"
+    :class="totalClasses"
+    :style="foreignStyles"
+    @click="handleClick"
+  >
     <slot></slot>
   </button>
 </template>
+
