@@ -1,56 +1,59 @@
 <script lang="ts" setup>
-import { ref, computed } from 'vue';
 
-  const { name, value } = defineProps<{ class?: string, style?: string, name: string, value: string }>()
-  const emit = defineEmits<{ (e: "change", val: string): void, (e: "enter", val: string): void }>()
+import { ref, computed } from 'vue';
+import { convertObjectToStyleString } from '@/utils';
+
+  const { name, value, style, class: classes, labelClass, labelStyles} = defineProps<{ labelClass?: string, labelStyles?: Record<string, string>, class?: string, style?: Record<string, string>, name: string, value: string }>()
+  const emit = defineEmits<{
+    (e: "keydown", val: string): void,
+  }>()
+
+  const foreignInputClasses = computed(() => classes ?? "")
+  const foreignInputStyles = computed(() => convertObjectToStyleString(style))
+
+  const foreignLabelClasses = computed(() => labelClass ?? "")
+  const foreignLabelStyles = computed(() => convertObjectToStyleString(labelStyles))
 
   const inputRef = ref<HTMLInputElement | null>(null)
-  const height = computed(() => inputRef.value?.getBoundingClientRect().height)
-
-  const inputFocused = ref(false)
-  const placeholderShown = computed(() => !inputFocused.value && value === "")
-
-  function handleChange(e: Event) {
+  function getTargetInputValue(e: Event): string | null {
     if (!e.target || !("value" in e.target) || typeof e.target.value !== "string") {
+      return null
+    }
+    return e.target.value
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === "Enter" && e.shiftKey) {
       return
     }
-    emit("change", e.target.value)
-  }
-
-  function handleEnter(e: KeyboardEvent) {
-    if (e.shiftKey || !e.target || !("value" in e.target) || typeof e.target.value !== "string") {
+    const value = getTargetInputValue(e)
+    if (!value) {
       return
     }
-    emit("enter", e.target.value)
+    emit("keydown", value)
   }
-
-  function handleInput(e: Event) {
-    if (!e.target || !("value" in e.target) || typeof e.target.value !== "string") {
-      return
-    }
-  }
-
-  function focusInput() {
-    inputRef.value?.focus()
-  }
-
-  function setInputFocus() {
-    inputFocused.value = true
-  }
-
-  function removeInputFocus() {
-    inputFocused.value = false
-  }
-
-  const computedStyle = computed(() => placeholderShown.value ? "" : `font-size: 1rem; line-height: 1.5rem; transform: translateY(-${height.value}px);`)
 </script>
 
 <template>
-  <div class="grid relative">
-    <input @change="handleChange" @keydown.enter="handleEnter" @input="handleInput" @focusin="setInputFocus" @focusout="removeInputFocus" ref="inputRef" type="text" :value="value" :name="name" placeholder="" />
-    <label :style="computedStyle" :for="name" class="transition-all duration-500 text-sm cursor-text absolute" @click="focusInput">
+  <div class="flex flex-col">
+    <label
+      :for="name"
+      :style="foreignLabelStyles"
+      :class="foreignLabelClasses"
+    >
       <slot name="label"></slot>
     </label>
+    <input
+      @keydown="handleKeydown"
+      ref="inputRef"
+      type="text"
+      :value="value"
+      :name="name"
+      placeholder=""
+      :style="foreignInputStyles"
+      class="pl-[2px]"
+      :class="foreignInputClasses"
+    />
   </div>
 </template>
 
