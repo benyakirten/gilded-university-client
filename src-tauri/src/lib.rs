@@ -163,6 +163,8 @@ mod test_read_token {
 
         let got = got.unwrap();
         assert_eq!(got, "hello");
+
+        fs::remove_file(".testfile").ok();
     }
 
     #[test]
@@ -184,7 +186,9 @@ mod test_read_token {
         assert_eq!(
             err.to_string(),
             "Unable to encrypt data: FILE_ENCRYPTION_KEY environment variable is not set"
-        )
+        );
+
+        fs::remove_file(".testfile").ok();
     }
 
     #[test]
@@ -198,7 +202,9 @@ mod test_read_token {
         assert!(got.is_err());
 
         let err = got.err().unwrap();
-        assert_eq!(err.to_string(), "Unable to decrypt data: aead::Error")
+        assert_eq!(err.to_string(), "Unable to decrypt data: aead::Error");
+
+        fs::remove_file(".testfile").ok();
     }
 
     #[test]
@@ -213,7 +219,7 @@ mod test_read_token {
         assert_eq!(
             err.to_string(),
             "Unable to decrypt data: Unable to read data from file"
-        )
+        );
     }
 }
 
