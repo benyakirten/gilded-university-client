@@ -1,8 +1,9 @@
 <script lang="ts" setup>
-  import { useStyleProps } from "@/utils"
-  import { ForeignStyles } from '@/types'
+  import { useForeignStyles } from "@/utils"
 
-  const { class: classes, style } = useStyleProps<ForeignStyles>()
+  const props = defineProps<{ class?: string, style?: Record<string, string>}>()
+  const baseClasses = "transition-all duration-500 px-2 py-1 rounded-xl capitalize hover:shadow-lg hover:bg-slate-100 active:shadow-sm active:translate-y-[2px]"
+  const { classes, style } = useForeignStyles(baseClasses, props.class, props.style)
   const emit = defineEmits<{ (e: "click", event: MouseEvent ): void}>()
 
   function handleClick(e: MouseEvent) {
@@ -11,7 +12,7 @@
 </script>
 
 <template>
-  <button :class="classes" :style="style" @click="handleClick">
+  <button class="" :class="classes" :style="style" @click="handleClick">
     <slot></slot>
   </button>
 </template>

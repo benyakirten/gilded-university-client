@@ -1,1 +1,1 @@
-export * from "./base.d"
+export * from "./base"

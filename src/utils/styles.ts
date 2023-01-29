@@ -1,5 +1,4 @@
-import { ForeignStyles } from "@/types"
-import { ref, watch, type Ref } from "vue"
+import { computed } from "vue"
 
 export function convertObjectToStyleString(record: Record<string, string>): string {
   return Object.entries(record).reduce<string>((acc, [key, value], idx) => {
@@ -11,17 +10,9 @@ export function convertObjectToStyleString(record: Record<string, string>): stri
   }, "")
 }
 
-export function useStyleProps<T extends ForeignStyles>(baseClasses: string = "") {
-  const props = defineProps<T>()
-  const combinedClasses = ref("")
-  watch({ classes: props.class }, ({ classes }) => {
-    combinedClasses.value = `${baseClasses} ${classes}`
-  })
+export function useForeignStyles(baseClasses: string = "", foreignClasses: string = "", foreignStyles: Record<string, string> = {}) {
+  const combinedClasses = computed(() => `${baseClasses} ${foreignClasses}`)
+  const convertedStyles = computed(() => convertObjectToStyleString(foreignStyles))
 
-  const convertedStyles = ref("")
-  watch({ style: props.style }, ({ style }) => {
-    convertedStyles.value = convertObjectToStyleString(style)
-  })
-
-  return { ...props, classes: combinedClasses, style: convertedStyles }
+  return { classes: combinedClasses, style: convertedStyles }
 }
