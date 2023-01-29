@@ -4,10 +4,14 @@
 
   const { class: classes, style } = useStyleProps<ForeignStyles>()
   const emit = defineEmits<{ (e: "click", event: MouseEvent ): void}>()
+
+  function handleClick(e: MouseEvent) {
+    emit("click", e)
+  }
 </script>
 
 <template>
-  <button :class="classes" :style="style" @click="(e) => emit("click", e)">
+  <button :class="classes" :style="style" @click="handleClick">
     <slot></slot>
   </button>
 </template>
